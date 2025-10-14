@@ -1,12 +1,11 @@
-name: Docker Build and Push
+name: Docker Build, Push & Deploy
 
 on:
   push:
-    branches: 
+    branches:
       - main
       - feature/*
   workflow_dispatch:
-
 
 permissions:
   contents: read
@@ -28,7 +27,6 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
- 
       - name: Install dependencies and build project
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
@@ -37,14 +35,12 @@ jobs:
           pnpm install
           pnpm run build
 
-      # Проверяем, что PAT действительно есть
       - name: Ensure GHCR_PAT is present
         run: |
           if [ -z "${{ secrets.GHCR_PAT }}" ]; then
             echo "GHCR_PAT is empty or missing. Add it in: Repo → Settings → Secrets and variables → Actions."
             exit 1
           fi
-
 
       - name: Log in to GitHub Container Registry (PAT)
         uses: docker/login-action@v3
@@ -53,13 +49,13 @@ jobs:
           username: vvdev228
           password: ${{ secrets.GHCR_PAT }}
 
-
+     
       - name: Compute lowercase tag
         id: img
         shell: bash
         run: |
-          REPO="${GITHUB_REPOSITORY#*/}"         # только имя репозитория
-          REPO_LC="${REPO,,}"                    # в нижний регистр
+          REPO="${GITHUB_REPOSITORY#*/}"     # только имя репозитория
+          REPO_LC="${REPO,,}"                # нижний регистр
           echo "tag=ghcr.io/vvdev228/${REPO_LC}:latest" >> "$GITHUB_OUTPUT"
 
       - name: Show computed tag
@@ -71,10 +67,16 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.img.outputs.tag }}
+
+   
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+     
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-              app-name: 9laB-KpZ
-              images: ghcr.io/${{ github.repository_owner }}/${{github.event.repository.name }}:latest
-        
-      
+          app-name: 9laB-KpZ
+          images: ${{ steps.img.outputs.tag }}
