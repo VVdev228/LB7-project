@@ -71,3 +71,10 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.img.outputs.tag }}
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+              app-name: 9laB-KpZ
+              images: ghcr.io/${{ github.repository_owner }}/${{github.event.repository.name }}:latest
+        
+      
