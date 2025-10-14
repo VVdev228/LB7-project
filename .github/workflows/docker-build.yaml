@@ -7,6 +7,10 @@ on:
       - feature/*
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,22 +35,21 @@ jobs:
           pnpm install
           pnpm run build
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry (PAT)
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: vvdev228
+          password: ${{ secrets.GHCR_PAT }}
 
-      # Получаем тег в нижнем регистре без шаманства в выражениях
-      - name: Compute lowercase tag
+      # Формируем тег строго в личный namespace пользователя
+      - name: Compute lowercase repo for tag
         id: img
         shell: bash
         run: |
-          OWNER_LC="${GITHUB_REPOSITORY_OWNER,,}"
           REPO="${GITHUB_REPOSITORY#*/}"
           REPO_LC="${REPO,,}"
-          echo "tag=ghcr.io/${OWNER_LC}/${REPO_LC}:latest" >> "$GITHUB_OUTPUT"
+          echo "tag=ghcr.io/vvdev228/${REPO_LC}:latest" >> "$GITHUB_OUTPUT"
 
       - name: Show computed tag
         run: echo "${{ steps.img.outputs.tag }}"
@@ -56,4 +59,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.img.outputs.tag }}   
+          tags: ${{ steps.img.outputs.tag }}
