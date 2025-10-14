@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
@@ -24,6 +24,9 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install dependencies and build project
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_AUTH_TOKEN: ${{ secrets.VITE_API_AUTH_TOKEN }}
         run: |
           pnpm install
           pnpm run build
@@ -35,9 +38,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Получаем тег в нижнем регистре без шаманства в выражениях
+      - name: Compute lowercase tag
+        id: img
+        shell: bash
+        run: |
+          OWNER_LC="${GITHUB_REPOSITORY_OWNER,,}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          REPO_LC="${REPO,,}"
+          echo "tag=ghcr.io/${OWNER_LC}/${REPO_LC}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Show computed tag
+        run: echo "${{ steps.img.outputs.tag }}"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ toLower(github.repository_owner) }}/${{ toLower(github.event.repository.name) }}:latest
+          tags: ${{ steps.img.outputs.tag }}
