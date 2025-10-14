@@ -7,6 +7,7 @@ on:
       - feature/*
   workflow_dispatch:
 
+# Явно даём право писать в Packages для этого job
 permissions:
   contents: read
   packages: write
@@ -27,6 +28,8 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
+      # Если у тебя есть Vite-переменные, добавь их в Secrets репозитория:
+      # VITE_API_BASE_URL, VITE_API_AUTH_TOKEN
       - name: Install dependencies and build project
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
@@ -35,6 +38,15 @@ jobs:
           pnpm install
           pnpm run build
 
+      # Проверяем, что PAT действительно есть
+      - name: Ensure GHCR_PAT is present
+        run: |
+          if [ -z "${{ secrets.GHCR_PAT }}" ]; then
+            echo "GHCR_PAT is empty or missing. Add it in: Repo → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      # Логинимся в GHCR по личному PAT (classic) с правами write:packages
       - name: Log in to GitHub Container Registry (PAT)
         uses: docker/login-action@v3
         with:
@@ -42,13 +54,13 @@ jobs:
           username: vvdev228
           password: ${{ secrets.GHCR_PAT }}
 
-      # Формируем тег строго в личный namespace пользователя
-      - name: Compute lowercase repo for tag
+      # Формируем тег: принудительно в твой личный namespace и полностью lowercase
+      - name: Compute lowercase tag
         id: img
         shell: bash
         run: |
-          REPO="${GITHUB_REPOSITORY#*/}"
-          REPO_LC="${REPO,,}"
+          REPO="${GITHUB_REPOSITORY#*/}"         # только имя репозитория
+          REPO_LC="${REPO,,}"                    # в нижний регистр
           echo "tag=ghcr.io/vvdev228/${REPO_LC}:latest" >> "$GITHUB_OUTPUT"
 
       - name: Show computed tag
