@@ -77,8 +77,8 @@ jobs:
       - name: Configure Web App container settings
         uses: azure/appservice-settings@v1
         with:
-          app-name: 9lab-kpz
-          resource-group-name: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          app-name: 9laB-KpZ
+          resource-group-name: 9laB-KpZ_group
           app-settings-json: |
             [
               {
@@ -101,6 +101,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 9lab-kpz
-          resource-group-name: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          app-name: 9laB-KpZ
+          resource-group-name: 9laB-KpZ_group
           images: ${{ steps.img.outputs.tag }}
