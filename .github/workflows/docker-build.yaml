@@ -103,4 +103,4 @@ jobs:
         with:
           app-name: 9laB-KpZ
           resource-group-name: 9laB-KpZ_group
-          images: ${{ steps.img.outputs.tag }}
+          images: ${{ steps.img.outputs.tag }} 
