@@ -74,9 +74,33 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-     
+      - name: Configure Web App container settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: 9lab-kpz
+          resource-group-name: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          app-settings-json: |
+            [
+              {
+                "name": "DOCKER_REGISTRY_SERVER_URL",
+                "value": "https://ghcr.io",
+                "slotSetting": false
+              },
+              {
+                "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+                "value": "vvdev228",
+                "slotSetting": false
+              },
+              {
+                "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+                "value": "${{ secrets.GHCR_PAT }}",
+                "slotSetting": false
+              }
+            ]
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 9laB-KpZ
+          app-name: 9lab-kpz
+          resource-group-name: ${{ secrets.AZURE_RESOURCE_GROUP }}
           images: ${{ steps.img.outputs.tag }}
